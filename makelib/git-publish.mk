@@ -38,6 +38,10 @@ endif
 
 PUBLISH_DIRS ?= $(PUBLISH_DIR)
 
+$(info ---- PUBLISH_BRANCH = $(PUBLISH_BRANCH))
+$(info ---- PUBLISH_PREFIX = $(PUBLISH_PREFIX))
+$(info ---- PUBLISH_TAGS = $(PUBLISH_TAGS))
+
 # ====================================================================================
 # git publish targets
 

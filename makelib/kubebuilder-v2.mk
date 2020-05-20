@@ -21,11 +21,12 @@ __KUBEBUILDERV2_MAKEFILE__ := included
 KUBEBUILDER_VERSION ?= 2.2.0
 KUBEBUILDER := $(TOOLS_HOST_DIR)/kubebuilder-$(KUBEBUILDER_VERSION)
 
-CRD_DIR ?= config/crds
-API_DIR ?= pkg/apis
+MANIFESTS_DIR ?= config
+CRD_DIR ?= $(MANIFESTS_DIR)/crds
+RBAC_DIR ?= $(MANIFESTS_DIR)/rbac
 
-CRD_OPTIONS ?= "crd:trivialVersions=true"
 BOILERPLATE_FILE ?= ./hack/boilerplate.go.txt
+
 
 # these are use by the kubebuilder test harness
 
@@ -51,21 +52,29 @@ $(KUBEBUILDER):
 	@rm -fr $(TOOLS_HOST_DIR)/tmp
 	@$(OK) installing kubebuilder $(KUBEBUILDER_VERSION)
 
-$(eval $(call tool.go.get,controller-gen,v0.2.4,sigs.k8s.io/controller-tools/cmd/controller-gen))
+$(eval $(call tool.go.get,controller-gen,v0.3.0,sigs.k8s.io/controller-tools/cmd/controller-gen))
 
 # ====================================================================================
 # Kubebuilder Targets
 
 $(eval $(call common.target,kubebuilder.manifests))
 
+
+GEN_CRD_OPTIONS ?= crd:trivialVersions=true
+GEN_RBAC_OPTIONS ?= rbac:roleName=manager-role
+GEN_WEBHOOK_OPTIONS ?= webhook
+GEN_OBJECT_OPTIONS ?= object:headerFile=$(BOILERPLATE_FILE)
+GEN_OUTPUTS_OPTIONS ?= output:crd:artifacts:config=$(CRD_DIR) output:rbac:artifacts:config=$(RBAC_DIR)
+
+
 # Generate manifests e.g. CRD, RBAC etc.
 .do.kubebuilder.manifests: $(CONTROLLER_GEN)
 	@$(INFO) Generating Kubebuilder manifests
-	@# first delete the CRD_DIR, to remove the CRDs of types that no longer exist
+	@# first delete the CRD_DIR and RBAC_DIR, to remove the CRDs of types that no longer exist
 	@rm -rf $(CRD_DIR)
+	@rm -rf $(RBAC_DIR)
 
-	@$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=$(CRD_DIR)
-	$(CONTROLLER_GEN) object:headerFile=$(BOILERPLATE_FILE) paths="./..."
+	$(CONTROLLER_GEN) paths="./pkg/..." $(GEN_CRD_OPTIONS) $(GEN_RBAC_OPTIONS) $(GEN_WEBHOOK_OPTIONS) $(GEN_OBJECT_OPTIONS) $(GEN_OUTPUTS_OPTIONS)
 
 	@$(OK) Generating Kubebuilder manifests
 

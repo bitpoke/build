@@ -275,8 +275,12 @@ clean: .img.clean .img.release.clean
 
 .publish.init: .img.release.build
 
-# only publish images for master and release branches
+GIT_TAG := $(shell git describe --tags --exact-match)
+
+# only publish images for master, release branches and tags prefixed with v
 ifneq ($(filter master release-%,$(BRANCH_NAME)),)
+.publish.run: $(addprefix .img.release.manifest.publish.,$(IMAGES))
+else ifneq ($(filter v%, $(GIT_TAG)),)
 .publish.run: $(addprefix .img.release.manifest.publish.,$(IMAGES))
 endif
 

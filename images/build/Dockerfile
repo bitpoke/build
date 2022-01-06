@@ -54,14 +54,13 @@ RUN sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /
         php7.4-xmlrpc \
         php7.4-xsl \
         php7.4-zip \
-        php-apcu \
-        php-apcu-bc \
-        php-geoip \
-        php-imagick \
-        php-memcached \
-        php-redis \
-        php-sodium \
-        php-yaml \
+        php7.4-apcu \
+        php7.4-apcu-bc \
+        php7.4-geoip \
+        php7.4-imagick \
+        php7.4-memcached \
+        php7.4-redis \
+        php7.4-yaml \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && COMPOSER_VERSION=2.2.3 \
     && COMPOSER_HASH=721cc27f81c6485fff70e6f56b9f2aadae770a1f8974a384c34e35987a230d8c \

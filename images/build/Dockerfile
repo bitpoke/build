@@ -62,7 +62,13 @@ RUN sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /
         php-redis \
         php-sodium \
         php-yaml \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && COMPOSER_VERSION=2.2.3 \
+    && COMPOSER_HASH=721cc27f81c6485fff70e6f56b9f2aadae770a1f8974a384c34e35987a230d8c \
+    && curl -fsSL -o /usr/local/bin/composer https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar \
+    && echo "${COMPOSER_HASH}  /usr/local/bin/composer" | sha256sum -c - \
+    && chmod +x /usr/local/bin/composer
+
 
 # ------------------------------------------------------------------------------------------------
 # git config

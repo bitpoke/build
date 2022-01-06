@@ -82,8 +82,8 @@ RUN set -ex \
 
 # ------------------------------------------------------------------------------------------------
 # Go support
-RUN GO_VERSION=1.16.12 && \
-    GO_HASH=7d657e86493ac1d5892f340a7d88b862b12edb5ac6e73c099e8e0668a6c916b7 && \
+RUN GO_VERSION=1.16.13 && \
+    GO_HASH=275fc03c90c13b0bbff13125a43f1f7a9f9c00a0d5a9f2d5b16dbc2fa2c6e12a && \
     curl -fsSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz -o golang.tar.gz && \
     echo "${GO_HASH}  golang.tar.gz" | sha256sum -c - && \
     tar -C /usr/local -xzf golang.tar.gz && \

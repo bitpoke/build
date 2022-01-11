@@ -236,9 +236,7 @@ endif
 
 TAGS := $(shell git tag -l --points-at HEAD)
 
-ifeq ($(origin BRANCH_NAME), undefined)
-BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD)
-endif
+GIT_HEAD := $(shell git rev-parse --abbrev-ref HEAD)
 
 # Set default GIT_TREE_STATE
 ifeq ($(shell git status -s | head -c1 | wc -c | tr -d '[[:space:]]'), 0)
@@ -280,6 +278,15 @@ VERSION_VALID := $(shell echo "$(VERSION)" | grep -E -q '$(VERSION_REGEX)' && ec
 VERSION_MAJOR := $(shell echo "$(VERSION)" | sed -E -e 's/$(VERSION_REGEX)/\1/')
 VERSION_MINOR := $(shell echo "$(VERSION)" | sed -E -e 's/$(VERSION_REGEX)/\2/')
 VERSION_PATCH := $(shell echo "$(VERSION)" | sed -E -e 's/$(VERSION_REGEX)/\3/')
+
+ifeq ($(origin BRANCH_NAME), undefined)
+ifeq ($(GIT_HEAD),HEAD)
+# pretend we are on a release branch if we are just checking out a commit
+BRANCH_NAME := release-$(VERSION_MAJOR).$(VERSION_MINOR)
+else
+BRANCH_NAME := $(GIT_HEAD)
+endif
+endif
 
 .publish.tag: .version.require.clean.tree
 ifneq ($(VERSION_VALID),1)

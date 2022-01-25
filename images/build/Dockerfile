@@ -185,6 +185,11 @@ RUN set -ex \
     && npm install -g postcss postcss-cli
 
 # ------------------------------------------------------------------------------------------------
+# firebase-cli
+RUN set -ex \
+    && npm install -g firebase-tools
+
+# ------------------------------------------------------------------------------------------------
 # Run tini as PID 1 and avoid signal handling issues
 RUN set -ex \
     && export TINI_VERSION=v0.19.0 \

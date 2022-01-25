@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM google/cloud-sdk:367.0.0
+FROM google/cloud-sdk:369.0.0
 
 ARG ARCH
 
@@ -20,8 +20,15 @@ ENV DEBIAN_FRONTEND noninteractive
 
 COPY build-scripts /usr/local/build-scripts
 
-COPY --from=docker/buildx-bin:0.6.1 /buildx /usr/libexec/docker/cli-plugins/docker-buildx
-RUN docker buildx version
+# ------------------------------------------------------------------------------------------------
+# git config
+RUN set -ex \
+    && git config --global user.email "bot@bitpoke.cloud" \
+    && git config --global user.name "Bitpoke Bot" \
+    && git config --global diff.tar-filelist.binary true \
+    && git config --global diff.tar-filelist.textconv 'tar -tvf' \
+    && git config --global diff.tar.binary true \
+    && git config --global diff.tar.textconv 'tar -xvOf'
 
 # ------------------------------------------------------------------------------------------------
 # install build and release tools
@@ -36,6 +43,45 @@ RUN /usr/local/build-scripts/install-packages.sh \
         sudo \
         wget \
         zip
+
+# ------------------------------------------------------------------------------------------------
+# Go support
+RUN GO_VERSION=1.17.6 && \
+    GO_HASH=231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2 && \
+    curl -fsSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz -o golang.tar.gz && \
+    echo "${GO_HASH}  golang.tar.gz" | sha256sum -c - && \
+    tar -C /usr/local -xzf golang.tar.gz && \
+    rm golang.tar.gz
+ENV GOPATH /workspace
+ENV PATH /workspace/bin:/usr/local/go/bin:$PATH
+
+# precompile the go standard library for all supported platforms and configurations
+# the install suffixes match those in golang.mk so please keep them in sync
+RUN platforms="darwin_amd64 windows_amd64 linux_amd64 linux_arm64" && \
+    for p in $platforms; do CGO_ENABLED=0 GOOS=${p%_*} GOARCH=${p##*_} GOARM=7 go install -installsuffix static -a std; done
+
+# ------------------------------------------------------------------------------------------------
+# Node JS and chrome support
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list && \
+    /usr/local/build-scripts/install-packages.sh \
+        nodejs \
+        google-chrome-stable \
+        xvfb && \
+    rm -f /etc/apt/sources.list.d/google.list && \
+    ln -fs /usr/local/bin/xvfb-chrome /usr/bin/google-chrome && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ENV CHROME_BIN /usr/bin/google-chrome
+
+# ------------------------------------------------------------------------------------------------
+# Yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list && \
+    /usr/local/build-scripts/install-packages.sh \
+        yarn && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # ------------------------------------------------------------------------------------------------
 # PHP
 RUN sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' \
@@ -68,54 +114,14 @@ RUN sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /
     && echo "${COMPOSER_HASH}  /usr/local/bin/composer" | sha256sum -c - \
     && chmod +x /usr/local/bin/composer
 
-
 # ------------------------------------------------------------------------------------------------
-# git config
+# docker-compose and docker-buildx
+
+COPY --from=docker/buildx-bin:0.7.1 /buildx /usr/libexec/docker/cli-plugins/docker-buildx
 RUN set -ex \
-    && git config --global user.email "bot@bitpoke.cloud" \
-    && git config --global user.name "Bitpoke Bot" \
-    && git config --global diff.tar-filelist.binary true \
-    && git config --global diff.tar-filelist.textconv 'tar -tvf' \
-    && git config --global diff.tar.binary true \
-    && git config --global diff.tar.textconv 'tar -xvOf'
-
-# ------------------------------------------------------------------------------------------------
-# Go support
-RUN GO_VERSION=1.16.13 && \
-    GO_HASH=275fc03c90c13b0bbff13125a43f1f7a9f9c00a0d5a9f2d5b16dbc2fa2c6e12a && \
-    curl -fsSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz -o golang.tar.gz && \
-    echo "${GO_HASH}  golang.tar.gz" | sha256sum -c - && \
-    tar -C /usr/local -xzf golang.tar.gz && \
-    rm golang.tar.gz
-ENV GOPATH /workspace
-ENV PATH /workspace/bin:/usr/local/go/bin:$PATH
-
-# precompile the go standard library for all supported platforms and configurations
-# the install suffixes match those in golang.mk so please keep them in sync
-RUN platforms="darwin_amd64 windows_amd64 linux_amd64 linux_arm64" && \
-    for p in $platforms; do CGO_ENABLED=0 GOOS=${p%_*} GOARCH=${p##*_} GOARM=7 go install -installsuffix static -a std; done
-
-# ------------------------------------------------------------------------------------------------
-# Node JS and chrome support
-RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
-    curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list && \
-    /usr/local/build-scripts/install-packages.sh \
-        nodejs \
-        google-chrome-stable \
-        xvfb && \
-    rm -f /etc/apt/sources.list.d/google.list && \
-    ln -fs /usr/local/bin/xvfb-chrome /usr/bin/google-chrome && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-ENV CHROME_BIN /usr/bin/google-chrome
-
-# ------------------------------------------------------------------------------------------------
-# Yarn
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - && \
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list && \
-    /usr/local/build-scripts/install-packages.sh \
-        yarn && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && export DOCKER_COMPOSE_VERSION="2.2.3" \
+    && curl -sL -o /usr/libexec/docker/cli-plugins/docker-compose "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" \
+    && chmod 0755 /usr/libexec/docker/cli-plugins/docker-compose
 
 # ------------------------------------------------------------------------------------------------
 # rclone
@@ -147,7 +153,7 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # helm
 RUN set -ex \
-    && export HELM_VERSION="3.6.3" \
+    && export HELM_VERSION="3.8.0" \
     && curl -sL -o helm.tar.gz "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" \
     && tar -C /usr/local/bin -xzvf helm.tar.gz --strip-components 1 linux-amd64/helm \
     && rm helm.tar.gz \
@@ -157,27 +163,18 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # helm secrets plugin
 RUN set -ex \
-    && export HELM_SECRETS_VERSION="3.8.3" \
+    && export HELM_SECRETS_VERSION="3.11.0" \
     && helm plugin install https://github.com/jkroepke/helm-secrets --version ${HELM_SECRETS_VERSION}
 
 # ------------------------------------------------------------------------------------------------
 # kustomize
 RUN set -ex \
-    && export KUSTOMIZE_VERSION="4.2.0" \
+    && export KUSTOMIZE_VERSION="4.4.1" \
     && curl -sL -o kustomize.tar.gz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
     && tar -C /usr/local/bin -xzvf kustomize.tar.gz \
     && rm kustomize.tar.gz \
     && chmod 0755 /usr/local/bin/kustomize \
     && chown root:root /usr/local/bin/kustomize
-
-# ------------------------------------------------------------------------------------------------
-# docker-compose
-
-RUN set -ex \
-    && export DOCKER_COMPOSE_VERSION="1.29.2" \
-    && curl -sL -o /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" \
-    && chmod +x /usr/local/bin/docker-compose \
-    && chown root:root /usr/local/bin/docker
 
 # ------------------------------------------------------------------------------------------------
 # Run tini as PID 1 and avoid signal handling issues

@@ -177,8 +177,15 @@ RUN set -ex \
     && chown root:root /usr/local/bin/kustomize
 
 # ------------------------------------------------------------------------------------------------
-# Run tini as PID 1 and avoid signal handling issues
+# hugo
+RUN set -ex \
+    && export HUGO_VERSION="0.92.0" \
+    && curl -sLo- "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz" | tar -zx -C /usr/local/bin hugo \
+    && pip3 install pygments \
+    && npm install -g postcss postcss-cli
 
+# ------------------------------------------------------------------------------------------------
+# Run tini as PID 1 and avoid signal handling issues
 RUN set -ex \
     && export TINI_VERSION=v0.19.0 \
     && curl -sL -o /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${ARCH} \

@@ -62,7 +62,7 @@ RUN platforms="darwin_amd64 windows_amd64 linux_amd64 linux_arm64" && \
 
 # ------------------------------------------------------------------------------------------------
 # Node JS and chrome support
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
     curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list && \
     /usr/local/build-scripts/install-packages.sh \

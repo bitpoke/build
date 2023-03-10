@@ -19,6 +19,7 @@ PROJECT_NAME := mysql-operator
 PROJECT_REPO := github.com/bitpoke/mysql-operator
 
 include build/makelib/common.mk
+EOF
 ```
 
 ## Usage

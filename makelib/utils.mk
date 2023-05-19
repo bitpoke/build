@@ -16,8 +16,8 @@ ifndef __UTILS_MAKEFILE__
 __UTILS_MAKEFILE__ := included
 
 COMMA := ,
-SPACE :=
-SPACE +=
+# define literal space character in a way that work with both GNU make 3 and 4
+SPACE := $(subst ,, )
 
 # define a newline
 define \n

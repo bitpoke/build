@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM google/cloud-sdk:369.0.0
+FROM google/cloud-sdk:431.0.0
 
 ARG ARCH
 
@@ -46,8 +46,8 @@ RUN /usr/local/build-scripts/install-packages.sh \
 
 # ------------------------------------------------------------------------------------------------
 # Go support
-RUN GO_VERSION=1.17.6 && \
-    GO_HASH=231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2 && \
+RUN GO_VERSION=1.17.13 && \
+    GO_HASH=4cdd2bc664724dc7db94ad51b503512c5ae7220951cac568120f64f8e94399fc && \
     curl -fsSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz -o golang.tar.gz && \
     echo "${GO_HASH}  golang.tar.gz" | sha256sum -c - && \
     tar -C /usr/local -xzf golang.tar.gz && \
@@ -108,8 +108,8 @@ RUN sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /
         php7.4-redis \
         php7.4-yaml \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && COMPOSER_VERSION=2.2.3 \
-    && COMPOSER_HASH=721cc27f81c6485fff70e6f56b9f2aadae770a1f8974a384c34e35987a230d8c \
+    && COMPOSER_VERSION=2.2.21 \
+    && COMPOSER_HASH=5211584ad39af26704da9f6209bc5d8104a2d576e80ce9c7ed8368ddd779d0af \
     && curl -fsSL -o /usr/local/bin/composer https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar \
     && echo "${COMPOSER_HASH}  /usr/local/bin/composer" | sha256sum -c - \
     && chmod +x /usr/local/bin/composer
@@ -117,16 +117,16 @@ RUN sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /
 # ------------------------------------------------------------------------------------------------
 # docker-compose and docker-buildx
 
-COPY --from=docker/buildx-bin:0.7.1 /buildx /usr/libexec/docker/cli-plugins/docker-buildx
+COPY --from=docker/buildx-bin:0.10.4 /buildx /usr/libexec/docker/cli-plugins/docker-buildx
 RUN set -ex \
-    && export DOCKER_COMPOSE_VERSION="2.2.3" \
+    && export DOCKER_COMPOSE_VERSION="2.18.1" \
     && curl -sL -o /usr/libexec/docker/cli-plugins/docker-compose "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" \
     && chmod 0755 /usr/libexec/docker/cli-plugins/docker-compose
 
 # ------------------------------------------------------------------------------------------------
 # rclone
 RUN set -ex \
-    && export RCLONE_VERSION=1.57.0 \
+    && export RCLONE_VERSION=1.62.2 \
     && curl -sL -o rclone-v${RCLONE_VERSION}-linux-amd64.deb https://github.com/rclone/rclone/releases/download/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-amd64.deb \
     && dpkg -i rclone-v${RCLONE_VERSION}-linux-amd64.deb \
     && rm rclone-v${RCLONE_VERSION}-linux-amd64.deb \
@@ -135,8 +135,8 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # dockerize
 RUN set -ex \
-    && export DOCKERIZE_VERSION="2.1.0" \
-    && curl -sL -o dockerize.tar.gz "https://github.com/presslabs/dockerize/releases/download/v${DOCKERIZE_VERSION}/dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz" \
+    && export DOCKERIZE_VERSION="2.2.0" \
+    && curl -sL -o dockerize.tar.gz "https://github.com/bitpoke/dockerize/releases/download/v${DOCKERIZE_VERSION}/dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz" \
     && tar -C /usr/local/bin -xzvf dockerize.tar.gz \
     && rm dockerize.tar.gz \
     && chmod 0755 /usr/local/bin/dockerize \
@@ -145,7 +145,7 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # sops
 RUN set -ex \
-    && export SOPS_VERSION="3.7.1" \
+    && export SOPS_VERSION="3.7.3" \
     && curl -sL -o /usr/local/bin/sops "https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux" \
     && chmod 0755 /usr/local/bin/sops \
     && chown root:root /usr/local/bin/sops
@@ -153,7 +153,7 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # helm
 RUN set -ex \
-    && export HELM_VERSION="3.8.0" \
+    && export HELM_VERSION="3.12.0" \
     && curl -sL -o helm.tar.gz "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" \
     && tar -C /usr/local/bin -xzvf helm.tar.gz --strip-components 1 linux-amd64/helm \
     && rm helm.tar.gz \
@@ -163,13 +163,13 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # helm secrets plugin
 RUN set -ex \
-    && export HELM_SECRETS_VERSION="3.11.0" \
+    && export HELM_SECRETS_VERSION="3.15.0" \
     && helm plugin install https://github.com/jkroepke/helm-secrets --version ${HELM_SECRETS_VERSION}
 
 # ------------------------------------------------------------------------------------------------
 # kustomize
 RUN set -ex \
-    && export KUSTOMIZE_VERSION="4.4.1" \
+    && export KUSTOMIZE_VERSION="4.5.7" \
     && curl -sL -o kustomize.tar.gz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
     && tar -C /usr/local/bin -xzvf kustomize.tar.gz \
     && rm kustomize.tar.gz \
@@ -179,7 +179,7 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # hugo
 RUN set -ex \
-    && export HUGO_VERSION="0.92.0" \
+    && export HUGO_VERSION="0.111.3" \
     && curl -sLo- "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_Linux-64bit.tar.gz" | tar -zx -C /usr/local/bin hugo \
     && pip3 install pygments \
     && npm install -g postcss postcss-cli

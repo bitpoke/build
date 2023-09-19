@@ -58,7 +58,7 @@ GO_LDFLAGS += -s -w
 endif
 
 # supported go versions
-GO_SUPPORTED_VERSIONS ?= 1.16|1.17
+GO_SUPPORTED_VERSIONS ?= 1.20|1.21
 
 # set GOOS and GOARCH
 GOOS := $(OS)
@@ -194,10 +194,6 @@ endef # tool.go.vendor.install
 # ====================================================================================
 # Tools install targets
 
-DEP_VERSION ?= 0.5.4
-DEP_DOWNLOAD_URL ?= https://github.com/golang/dep/releases/download/v$(DEP_VERSION)/dep-$(HOSTOS)-$(HOSTARCH)
-$(eval $(call tool.download,dep,$(DEP_VERSION),$(DEP_DOWNLOAD_URL)))
-
 GOLANGCI_LINT_VERSION ?= 1.41.1
 GOLANGCI_LINT_DOWNLOAD_URL ?= https://github.com/golangci/golangci-lint/releases/download/v$(GOLANGCI_LINT_VERSION)/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(HOSTOS)-$(HOSTARCH).tar.gz
 $(eval $(call tool.download.tar.gz,golangci-lint,$(GOLANGCI_LINT_VERSION),$(GOLANGCI_LINT_DOWNLOAD_URL)))
@@ -210,7 +206,7 @@ endif
 
 # we use a consistent version of gofmt even while running different go compilers.
 # see https://github.com/golang/go/issues/26397 for more details
-GOFMT_VERSION ?= 1.16.6
+GOFMT_VERSION ?= 1.21.1
 GOFMT_DOWNLOAD_URL ?= https://dl.google.com/go/go$(GOFMT_VERSION).$(HOSTOS)-$(HOSTARCH).tar.gz
 ifneq ($(findstring $(GOFMT_VERSION),$(GO_VERSION)),)
 GOFMT := $(shell which gofmt)
@@ -218,13 +214,13 @@ else
 $(eval $(call tool.download.tar.gz,gofmt,$(GOFMT_VERSION),$(GOFMT_DOWNLOAD_URL),bin/gofmt))
 endif
 
-GOIMPORTS_VERSION ?= v0.1.5
+GOIMPORTS_VERSION ?= v0.12.0
 GOIMPORTS_URL ?= golang.org/x/tools/cmd/goimports
 $(eval $(call tool.go.install,goimports,$(GOIMPORTS_VERSION),$(GOIMPORTS_URL)))
 
 ifeq ($(GO_TEST_TOOL),ginkgo)
-GINKGO_VERSION ?= v1.16.4
-GINKGO_URL ?= github.com/onsi/ginkgo/ginkgo
+GINKGO_VERSION ?= v2.12.1
+GINKGO_URL ?= github.com/onsi/ginkgo/v2/ginkgo
 $(eval $(call tool.go.install,ginkgo,$(GINKGO_VERSION),$(GINKGO_URL)))
 else # GO_TEST_TOOL != ginkgo
 GO_JUNIT_REPORT_VERSION ?= v0.9.2-0.20191008195320-984a47ca6b0a
@@ -313,8 +309,6 @@ go.fmt: $(GOFMT) .go.imports.fix
 	@$(GOIMPORTS) -l -w -local $(GO_PROJECT) $(GO_SUBDIRS) $(GO_INTEGRATION_TESTS_SUBDIRS) || $(FAIL)
 	@$(OK) goimports fix
 
-ifeq ($(GO111MODULE),on)
-
 .go.vendor.lite go.vendor.check:
 	@$(INFO) verify dependencies have expected content
 	@$(GOHOST) mod verify || $(FAIL)
@@ -329,34 +323,6 @@ go.vendor:
 	@$(INFO) go mod vendor
 	@$(GOHOST) mod vendor || $(FAIL)
 	@$(OK) go mod vendor
-
-else
-
-.go.vendor.lite: $(DEP)
-#	dep ensure blindly updates the whole vendor tree causing everything to be rebuilt. This workaround
-#	will only call dep ensure if the .lock file changes or if the vendor dir is non-existent.
-	@if [ ! -d $(GO_VENDOR_DIR) ]; then \
-		$(MAKE) go.vendor; \
-	elif ! $(DEP) ensure -no-vendor -dry-run &> /dev/null; then \
-		$(MAKE) go.vendor; \
-	fi
-
-go.vendor.check: $(DEP)
-	@$(INFO) checking if vendor deps changed
-	@$(DEP) check -skip-vendor || $(FAIL)
-	@$(OK) vendor deps have not changed
-
-go.vendor.update: $(DEP)
-	@$(INFO) updating vendor deps
-	@$(DEP) ensure -update -v || $(FAIL)
-	@$(OK) updating vendor deps
-
-go.vendor: $(DEP)
-	@$(INFO) dep ensure
-	@$(DEP) ensure || $(FAIL)
-	@$(OK) dep ensure
-
-endif
 
 .go.clean:
 	@# `go modules` creates read-only folders under WORK_DIR

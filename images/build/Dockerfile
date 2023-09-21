@@ -153,7 +153,7 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # helm
 RUN set -ex \
-    && export HELM_VERSION="3.12.0" \
+    && export HELM_VERSION="3.12.3" \
     && curl -sL -o helm.tar.gz "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" \
     && tar -C /usr/local/bin -xzvf helm.tar.gz --strip-components 1 linux-amd64/helm \
     && rm helm.tar.gz \
@@ -169,7 +169,7 @@ RUN set -ex \
 # ------------------------------------------------------------------------------------------------
 # kustomize
 RUN set -ex \
-    && export KUSTOMIZE_VERSION="4.5.7" \
+    && export KUSTOMIZE_VERSION="5.1.1" \
     && curl -sL -o kustomize.tar.gz "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
     && tar -C /usr/local/bin -xzvf kustomize.tar.gz \
     && rm kustomize.tar.gz \

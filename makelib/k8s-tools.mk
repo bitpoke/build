@@ -19,17 +19,17 @@ __K8S_TOOLS_MAKEFILE__ := included
 # tools
 
 # kubectl download and install
-KUBECTL_VERSION ?= 1.19.13
+KUBECTL_VERSION ?= 1.27.6
 KUBECTL_DOWNLOAD_URL ?= https://storage.googleapis.com/kubernetes-release/release/v$(KUBECTL_VERSION)/bin/$(HOSTOS)/$(HOSTARCH)/kubectl
 $(eval $(call tool.download,kubectl,$(KUBECTL_VERSION),$(KUBECTL_DOWNLOAD_URL)))
 
 # kind download and install
-KIND_VERSION ?= 0.11.1
+KIND_VERSION ?= 0.20.0
 KIND_DOWNLOAD_URL ?= https://github.com/kubernetes-sigs/kind/releases/download/v$(KIND_VERSION)/kind-$(HOSTOS)-$(HOSTARCH)
 $(eval $(call tool.download,kind,$(KIND_VERSION),$(KIND_DOWNLOAD_URL)))
 
-# kind download and install
-KUSTOMIZE_VERSION ?= 4.2.0
+# kustomize download and install
+KUSTOMIZE_VERSION ?= 5.1.1
 KUSTOMIZE_DOWNLOAD_URL ?=https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_$(HOST_PLATFORM).tar.gz
 $(eval $(call tool.download.tar.gz,kustomize,$(KUSTOMIZE_VERSION),$(KUSTOMIZE_DOWNLOAD_URL),kustomize,0))
 
